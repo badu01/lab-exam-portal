@@ -132,7 +132,7 @@ const FullScreenWrapper = ({ children, examData }) => {
       clearInterval(checkFullscreen);
       document.body.style.userSelect = "";
     };
-  }, [violationCount]);
+  }, [handleViolation, violationCount]);
 
   return (
     <>
