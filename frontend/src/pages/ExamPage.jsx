@@ -53,8 +53,12 @@ function ExamPage() {
       if (!question) return;
       try {
         const response = await axios.get(
-          `https://code-editor-backend-production-e36d.up.railway.app/questions/${question.id}/${language}`
+          `https://code-editor-backend-production-e36d.up.railway.app/questions/${question.id}`
         );
+        console.log("ID======"+question.id);
+        console.log("lang======"+language);
+        console.log("signatureeee======"+response.data);
+        
         setCode(response.data.functionSignature);
       } catch (err) {
         console.error("Error fetching function signature:", err);

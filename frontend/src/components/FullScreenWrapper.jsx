@@ -1,70 +1,85 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Warning from "./Warning";
 
 const FullScreenWrapper = ({ children, examData }) => {
   const [violationCount, setViolationCount] = useState(-1);
   const [isWarning, setWarning] = useState(false);
+  const [lastViolationTime, setLastViolationTime] = useState(0);
   const navigate = useNavigate();
 
   // Load violation count from session storage on component mount
   useEffect(() => {
-    const savedCount = sessionStorage.getItem('tabViolationCount');
+    const savedCount = sessionStorage.getItem("tabViolationCount");
     if (savedCount) {
       setViolationCount(parseInt(savedCount));
     }
   }, []);
 
-  const enterFullScreen = () => {
+  const enterFullScreen = useCallback(() => {
     const elem = document.documentElement;
     if (elem.requestFullscreen) {
       elem.requestFullscreen().catch((err) => {
         console.error("Error attempting to enable full-screen mode:", err.message);
       });
     }
-  };
+  }, []);
 
-  const terminateExam = () => {
-    // Auto-submit current progress
-    navigate('/exam/finish', {
+  const terminateExam = useCallback(() => {
+    navigate("/exam/finish", {
       state: {
-        answers: examData?.code || '',
+        answers: examData?.code || "",
         testCases: examData?.results || [],
-        terminated: true
-      }
+        terminated: true,
+      },
     });
-    // Clear violation count
-    sessionStorage.removeItem('tabViolationCount');
-  };
+    sessionStorage.removeItem("tabViolationCount");
+  }, [navigate, examData]);
 
-  const handleViolation = () => {
+  const handleViolation = useCallback(() => {
+    const now = Date.now();
+    // Prevent multiple violations within 1 second
+    if (now - lastViolationTime < 1000) return;
+
+    setLastViolationTime(now);
     const newCount = violationCount + 1;
     setViolationCount(newCount);
-    sessionStorage.setItem('tabViolationCount', newCount.toString());
+    sessionStorage.setItem("tabViolationCount", newCount.toString());
 
     if (newCount >= 2) {
-      // Third violation - terminate exam
       terminateExam();
     } else {
       setWarning(true);
     }
-  };
+  }, [violationCount, lastViolationTime, terminateExam]);
 
-  const handleReturn = () => {
-    setWarning(false);
-  };
+  // const handleReturn = useCallback(() => {
+  //   setWarning(false);
+  // }, []);
+
+  const preventKeys = useCallback((event) => {
+    const blockedKeys = ["Escape", "F11", "Alt", "F5", "F12"];
+    if (blockedKeys.includes(event.key)) {
+      event.preventDefault();
+      handleViolation();
+    }
+  }, [handleViolation]);
+
+  const disableRightClick = useCallback((event) => {
+    event.preventDefault();
+    handleViolation();
+  }, [handleViolation]);
 
   useEffect(() => {
     const handleBlur = () => {
-      console.log('bluredddd');
-      
-      handleViolation();}
-    const handleVisibilityChange = () => {
-      console.log('visibility');
-      if (document.hidden) {
+      if (!isWarning) {
         handleViolation();
-      } else {
-        handleReturn();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && !isWarning) {
+        handleViolation();
       }
     };
 
@@ -75,30 +90,9 @@ const FullScreenWrapper = ({ children, examData }) => {
       window.removeEventListener("blur", handleBlur);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [violationCount]);
-
-  const preventKeys = (event) => {
-    const blockedKeys = [
-      "Escape",
-      "F11",
-      "Alt",
-      "F5",
-      "F12",
-    ];
-
-    if (blockedKeys.includes(event.key)) {
-      event.preventDefault();
-      //handleViolation();
-    }
-  };
-
-  const disableRightClick = (event) => {
-    event.preventDefault();
-    handleViolation();
-  };
+  }, [isWarning, handleViolation]);
 
   useEffect(() => {
-    // Enter fullscreen mode as soon as the component mounts
     enterFullScreen();
 
     // Disable right-click and text selection
@@ -107,18 +101,19 @@ const FullScreenWrapper = ({ children, examData }) => {
 
     // Block keyboard shortcuts
     document.addEventListener("keydown", preventKeys);
-    document.addEventListener("keypress", preventKeys);
 
     const preventWindowClose = (event) => {
       event.preventDefault();
       event.returnValue = "";
-      handleViolation();
+      if (!isWarning) {
+        handleViolation();
+      }
     };
 
     window.addEventListener("beforeunload", preventWindowClose);
 
     const checkFullscreen = setInterval(() => {
-      if (!document.fullscreenElement) {
+      if (!document.fullscreenElement && !isWarning) {
         enterFullScreen();
         handleViolation();
       }
@@ -127,18 +122,17 @@ const FullScreenWrapper = ({ children, examData }) => {
     return () => {
       document.removeEventListener("contextmenu", disableRightClick);
       document.removeEventListener("keydown", preventKeys);
-      document.removeEventListener("keypress", preventKeys);
       window.removeEventListener("beforeunload", preventWindowClose);
       clearInterval(checkFullscreen);
       document.body.style.userSelect = "";
     };
-  }, [handleViolation, violationCount]);
+  }, [enterFullScreen, disableRightClick, preventKeys, handleViolation, isWarning]);
 
   return (
     <>
       {isWarning && (
-        <Warning 
-          onClose={() => setWarning(false)} 
+        <Warning
+          onClose={() => setWarning(false)}
           examData={examData}
           violationCount={violationCount}
         />
