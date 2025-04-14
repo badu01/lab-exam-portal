@@ -69,9 +69,9 @@ const AllExamsPage = () => {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Welcome, {user.name}</h1>
+              <h1 className="text-2xl font-bold">Welcome, user.name</h1>
               <p className="text-gray-300 font-mono tracking-wide">
-                {user.registerNumber}
+                user.registerNumber
               </p>
             </div>
           </div>

@@ -1,24 +1,33 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Timer from "../components/Timer";
 import CodeEditor from "../components/CodeEditor";
 import axios from "axios";
 import FullScreenWrapper from "../components/FullScreenWrapper";
+import { exams } from "../utils/examData.js";
 
 function ExamPage() {
-  const [code, setCode] = useState(""); 
-  const [language, setLanguage] = useState("python");
+  const { examId } = useParams();
+
+  const exam = exams.find((exam) => exam.id === examId * 1);
+
+  const language = exam.language;
+  const [code, setCode] = useState("");
+
   const [question, setQuestion] = useState(null);
   const [result, setResult] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
   const navigate = useNavigate();
-  var results
+
+  var results;
 
   useEffect(() => {
     async function fetchQuestion() {
       try {
-        const response = await axios.get("https://code-editor-backend-production-e36d.up.railway.app/questions");
+        const response = await axios.get(
+          "https://code-editor-backend-production-e36d.up.railway.app/questions"
+        );
         const questions = response.data.data;
         const index = Math.floor(Math.random() * questions.length);
         const selectedQuestion = questions[index];
@@ -53,12 +62,9 @@ function ExamPage() {
       if (!question) return;
       try {
         const response = await axios.get(
-          `https://code-editor-backend-production-e36d.up.railway.app/questions/${question.id}`
+          `https://code-editor-backend-production-e36d.up.railway.app/questions/${question.id}/${language}`
         );
-        console.log("ID======"+question.id);
-        console.log("lang======"+language);
-        console.log("signatureeee======"+response.data);
-        
+
         setCode(response.data.functionSignature);
       } catch (err) {
         console.error("Error fetching function signature:", err);
@@ -119,21 +125,23 @@ function ExamPage() {
     });
   };
 
-  return ( 
-    <FullScreenWrapper examData={{ code, results}}>
+  return (
+    <FullScreenWrapper examData={{ code, results }}>
       <div className="bg-gray-900 text-white min-h-screen flex flex-col">
         {/* Sticky Header */}
         <div className="flex justify-between items-center py-4 px-6 bg-gray-800/90 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-gray-700">
           <div>
-            <h1 className="text-lg font-semibold tracking-wide text-gray-400">CST333</h1>
+            <h1 className="text-lg font-semibold tracking-wide text-gray-400">
+              CST333
+            </h1>
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
               Python Lab Examination
             </h2>
           </div>
           <div className="flex items-center gap-4">
             <Timer hour={0.1} onTimeUp={handleTimeOut} />
-            <button 
-              onClick={handleSubmit} 
+            <button
+              onClick={handleSubmit}
               className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all rounded-lg text-white font-semibold shadow-lg hover:shadow-red-500/20"
             >
               Submit Exam
@@ -158,17 +166,32 @@ function ExamPage() {
               <div className="lg:w-1/2 flex flex-col gap-6">
                 {/* Question Card */}
                 <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-                  <h1 className="text-2xl font-semibold mb-4">{question.title}</h1>
+                  <h1 className="text-2xl font-semibold mb-4">
+                    {question.title}
+                  </h1>
                   <div className="prose prose-invert max-w-none">
-                    <p className="text-gray-300 whitespace-pre-line">{question.description}</p>
+                    <p className="text-gray-300 whitespace-pre-line">
+                      {question.description}
+                    </p>
                   </div>
                 </div>
 
                 {/* Test Cases Card */}
                 <div className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex-grow">
                   <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-blue-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
                     </svg>
                     Test Cases
                   </h2>
@@ -186,7 +209,9 @@ function ExamPage() {
                         {result.map((testCase, index) => (
                           <tr key={index}>
                             <td className="px-4 py-3 text-gray-300 font-mono text-sm">
-                              {Array.isArray(testCase.input) ? testCase.input.join(", ") : testCase.input}
+                              {Array.isArray(testCase.input)
+                                ? testCase.input.join(", ")
+                                : testCase.input}
                             </td>
                             <td className="px-4 py-3 text-gray-300 font-mono text-sm">
                               {testCase.expectedOutput.toString()}
@@ -220,14 +245,11 @@ function ExamPage() {
               {/* Right Column - Code Editor */}
               <div className="lg:w-1/2 flex flex-col">
                 <div className="bg-gray-800 p-2 rounded-xl shadow-lg border border-gray-700 flex-grow flex flex-col">
-                 
-                  
                   <div className="flex-grow">
                     <CodeEditor
                       value={code}
                       setValue={setCode}
                       language={language}
-                      setLanguage={setLanguage}
                     />
                   </div>
 
@@ -242,16 +264,41 @@ function ExamPage() {
                   >
                     {isRunning ? (
                       <>
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg
+                          className="animate-spin h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                         Running...
                       </>
                     ) : (
                       <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         Run Code
                       </>

@@ -1,6 +1,6 @@
 import { Editor } from "@monaco-editor/react";
 
-function CodeEditor({ value, setValue, language, setLanguage }) {
+function CodeEditor({ value, setValue, language }) {
   const editorOptions = {
     minimap: { enabled: false },
     fontSize: 14,
@@ -17,14 +17,14 @@ function CodeEditor({ value, setValue, language, setLanguage }) {
     wordWrap: "on",
   };
 
-  const languageOptions = [
-    { value: "python", label: "Python" },
-    { value: "java", label: "Java" },
-    { value: "c", label: "C" },
-    { value: "javascript", label: "JavaScript" },
-    { value: "typescript", label: "TypeScript" },
-    { value: "cpp", label: "C++" },
-  ];
+  // const languageOptions = [
+  //   { value: "python", label: "Python" },
+  //   { value: "java", label: "Java" },
+  //   { value: "c", label: "C" },
+  //   { value: "javascript", label: "JavaScript" },
+  //   { value: "typescript", label: "TypeScript" },
+  //   { value: "cpp", label: "C++" },
+  // ];
 
   return (
     <div className="flex flex-col h-full rounded-xl overflow-hidden border border-gray-700 bg-gray-800 shadow-lg">
@@ -47,9 +47,10 @@ function CodeEditor({ value, setValue, language, setLanguage }) {
           </svg>
           <h2 className="text-lg font-semibold text-white">Code Editor</h2>
         </div>
-        
+
+        <span>{language}</span>
         {/* Language Selector */}
-        <div className="relative">
+        {/* <div className="relative">
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
@@ -75,7 +76,7 @@ function CodeEditor({ value, setValue, language, setLanguage }) {
               />
             </svg>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Monaco Editor */}
